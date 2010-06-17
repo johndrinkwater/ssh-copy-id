@@ -11,7 +11,7 @@ while getopts ':i:p:h' OPTION; do
   case "$OPTION" in
     i)
       if [ -n "$OPTARG" ]; then
-        if expr "$OPTARG" : ".*\.pub" > /dev/null ; then
+        if expr "$OPTARG" : ".*\.pub$" > /dev/null ; then
           ID_FILE="$OPTARG"
         else
           ID_FILE="$OPTARG.pub"
