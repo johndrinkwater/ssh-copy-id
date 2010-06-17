@@ -104,7 +104,7 @@ case $REMOTE_VERSION in
   *)
     # Assuming default being OpenSSH
     populate_new_ids $1 0
-    printf "$NEW_IDS" | ssh $PORTOPTION $1 "umask 077; test -d .ssh || mkdir .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    printf "$NEW_IDS" | ssh $PORTOPTION $1 "umask 077; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
     ADDED=$( { printf "$NEW_IDS"; echo; } | wc -l)
     ;;
 esac
