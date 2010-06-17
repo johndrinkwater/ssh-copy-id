@@ -7,44 +7,116 @@
 
 ID_FILE="${HOME}/.ssh/id_rsa.pub"
 
-if [ "-i" = "$1" ]; then
-  shift
-  # check if we have 2 parameters left, if so the first is the new ID file
-  if [ -n "$2" ]; then
-    if expr "$1" : ".*\.pub" > /dev/null ; then
-      ID_FILE="$1"
+while getopts ':i:p:h' OPTION; do
+  case "$OPTION" in
+    i)
+      if [ -n "$OPTARG" ]; then
+        if expr "$OPTARG" : ".*\.pub" > /dev/null ; then
+          ID_FILE="$OPTARG"
+        else
+          ID_FILE="$OPTARG.pub"
+        fi
+      fi
+      PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
+    ;;
+    p)
+    if [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
+      PORTOPTION="-p $OPTARG "
     else
-      ID_FILE="$1.pub"
+      echo "Bad port '$OPTARG'" >&2
+      exit 1
     fi
-    shift         # and this should leave $1 as the target name
-  fi
-else
-  if [ x$SSH_AUTH_SOCK != x ] && ssh-add -L >/dev/null 2>&1; then
-    GET_ID="$GET_ID ssh-add -L"
-  fi
+    ;;
+    h|-help)
+      echo "Usage: $0 [-i [identity_file]] [-p port] [user@]machine" >&2
+      exit 1
+    ;;
+  esac;
+done;
+
+shift $(($OPTIND - 1))
+
+if [ "$#" -lt 2 ] && [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1; then
+  GET_ID="ssh-add -L"
 fi
 
-if [ -z "`eval $GET_ID`" ] && [ -r "${ID_FILE}" ] ; then
+if [ -z "$(eval $GET_ID)" ] && [ -r "${ID_FILE}" ] ; then
   GET_ID="cat ${ID_FILE}"
+  PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
 fi
 
-if [ -z "`eval $GET_ID`" ]; then
+if [ -z "$(eval $GET_ID)" ]; then
   echo "$0: ERROR: No identities found" >&2
   exit 1
 fi
 
-if [ "$#" -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-  echo "Usage: $0 [-i [identity_file]] [user@]machine" >&2
-  exit 1
-fi
+populate_new_ids() {
+  local HOST="$1"
+  local SUCCESS="$2"
 
-{ eval "$GET_ID" ; } | ssh ${1%:} "umask 077; test -d .ssh || mkdir .ssh ; cat >> .ssh/authorized_keys" || exit 1
+  ID_FILE_TEMP=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
+  trap "rm -f $ID_FILE_TEMP" EXIT TERM INT QUIT
+  NEW_IDS=$(
+    eval $GET_ID | {
+      while read ID; do
+        echo "$ID" > $ID_FILE_TEMP
+          ssh -i ${PRIV_ID_FILE:-$ID_FILE_TEMP} \
+              -o PreferredAuthentications=publickey \
+              -o IdentitiesOnly=yes $PORTOPTION $HOST exit > /dev/null 2>&1
 
-cat <<EOF
-Now try logging into the machine, with "ssh '${1%:}'", and check in:
+        if [ "$?" != $SUCCESS ]; then
+          if [ -z "$NEW_IDS" ]; then
+            NEW_IDS="$ID"
+          else
+            NEW_IDS=$(printf "${NEW_IDS}\n${ID}")
+          fi
+        fi
+      done
+      printf "$NEW_IDS"
+    }
+  )
+  rm -f "$ID_FILE_TEMP" && trap - EXIT TERM INT QUIT
 
-  .ssh/authorized_keys
+  if [ -z "$NEW_IDS" ]; then
+    printf "\n$0: WARNING: All keys were skipped because they already exist on the remote system.\n\n" >&2
+    exit 0
+  fi
+}
 
-to make sure we haven't added extra keys that you weren't expecting.
+REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $1 2>&1 |
+                 sed -ne 's/.*remote software version //p')
+
+case $REMOTE_VERSION in
+  NetScreen*)
+    populate_new_ids $1 1
+    for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
+      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $1 > /dev/null 2>&1
+      if [ $? == 255 ]; then
+	echo "$0: WARNING: NetScreen only supports dsa keys" >&2
+      else
+        ADDED=$(($ADDED + 1))
+      fi
+    done
+    if [ -z "$ADDED" ]; then
+      exit 1
+    fi
+    ;;
+  *)
+    # Assuming default being OpenSSH
+    populate_new_ids $1 0
+    printf "$NEW_IDS" | ssh $PORTOPTION $1 "umask 077; test -d .ssh || mkdir .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    ADDED=$( { printf "$NEW_IDS"; echo; } | wc -l)
+    ;;
+esac
+
+cat <<-EOF
+
+	Number of key(s) added: $ADDED
+
+	Now try logging into the machine, with "ssh $PORTOPTION'${1%:}'", and check in:
+
+		.ssh/authorized_keys
+
+	to make sure we haven't added extra keys that you weren't expecting.
 
 EOF
