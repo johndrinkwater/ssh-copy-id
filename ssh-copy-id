@@ -42,6 +42,9 @@ done;
 
 shift $(($OPTIND - 1))
 
+# drop a trailing colon
+USER_HOST=${1%:}
+
 if [ "$#" -lt 2 ] && [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1; then
   GET_ID="ssh-add -L"
 fi
@@ -57,7 +60,7 @@ if [ -z "$(eval $GET_ID)" ]; then
 fi
 
 populate_new_ids() {
-  local HOST="$1"
+  local USRHST="$1"
   local SUCCESS="$2"
 
   ID_FILE_TEMP=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
@@ -68,7 +71,7 @@ populate_new_ids() {
         echo "$ID" > $ID_FILE_TEMP
           ssh -i ${PRIV_ID_FILE:-$ID_FILE_TEMP} \
               -o PreferredAuthentications=publickey \
-              -o IdentitiesOnly=yes $PORTOPTION $HOST exit > /dev/null 2>&1
+              -o IdentitiesOnly=yes $PORTOPTION $USRHST exit > /dev/null 2>&1
 
         if [ "$?" != $SUCCESS ]; then
           if [ -z "$NEW_IDS" ]; then
@@ -89,14 +92,14 @@ populate_new_ids() {
   fi
 }
 
-REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $1 2>&1 |
+REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $USER_HOST 2>&1 |
                  sed -ne 's/.*remote software version //p')
 
 case $REMOTE_VERSION in
   NetScreen*)
-    populate_new_ids $1 1
+    populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
-      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $1 > /dev/null 2>&1
+      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $USER_HOST > /dev/null 2>&1
       if [ $? == 255 ]; then
 	echo "$0: WARNING: NetScreen only supports dsa keys" >&2
       else
@@ -109,8 +112,8 @@ case $REMOTE_VERSION in
     ;;
   *)
     # Assuming default being OpenSSH
-    populate_new_ids $1 0
-    printf "$NEW_IDS" | ssh $PORTOPTION $1 "umask 077; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    populate_new_ids $USER_HOST 0
+    printf "$NEW_IDS" | ssh $PORTOPTION $USER_HOST "umask 077; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
     ADDED=$( { printf "$NEW_IDS"; echo; } | wc -l)
     ;;
 esac
@@ -119,7 +122,7 @@ cat <<-EOF
 
 	Number of key(s) added: $ADDED
 
-	Now try logging into the machine, with "ssh $PORTOPTION'$1'", and check
+	Now try logging into the machine, with "ssh $PORTOPTION'$USER_HOST'", and check
 	to make sure we haven't added extra keys that you weren't expecting.
 
 EOF
