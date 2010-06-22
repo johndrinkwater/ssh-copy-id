@@ -13,7 +13,7 @@
 
 ID_FILE="$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)"
 
-while getopts ':i:p:h' OPTION; do
+while getopts 'i:p:h?' OPTION; do
   case "$OPTION" in
     i)
       if [ -n "$OPTARG" ]; then
@@ -33,8 +33,8 @@ while getopts ':i:p:h' OPTION; do
       exit 1
     fi
     ;;
-    h|-help)
-      echo "Usage: $0 [-i [identity_file]] [-p port] [user@]machine" >&2
+    h|\?)
+      echo "Usage: $0 [-i identity_file] [-p port] [user@]machine" >&2
       exit 1
     ;;
   esac;
