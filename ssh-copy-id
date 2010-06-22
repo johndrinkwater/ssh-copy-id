@@ -1,9 +1,14 @@
 #!/bin/sh
 
-# Shell script to install your public key on a remote machine
-# Takes the remote machine name as an argument.
-# Obviously, the remote machine must accept password authentication,
-# or one of the other keys in your ssh-agent, for this to work.
+# Copyright (c) 1999-2010 Philip Hands <phil@hands.com>
+#               2010 Eric Moret <eric.moret@gmail.com>
+#               2009 Xr <xr@i-jeuxvideo.com>
+#               2007 Justin Pryzby <justinpryzby@users.sourceforge.net>
+# Modification and redistribution is permitted provided that due credit
+# is given to the authors by leaving this copyright notice intact.
+
+# Shell script to install your public key(s) on a remote machine
+# See the ssh-copy-id(1) man page for details
 
 ID_FILE="${HOME}/.ssh/id_rsa.pub"
 
