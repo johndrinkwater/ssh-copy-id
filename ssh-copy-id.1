@@ -21,7 +21,7 @@ the original English.
 .Os
 .Sh NAME
 .Nm ssh-copy-id
-.Nd install your public key in a remote machine's authorized_keys
+.Nd use locally available keys to authorize logins on a remote machine
 .Sh SYNOPSIS
 .Nm ssh-copy-id
 .Op Fl i Ar identity_file
@@ -36,8 +36,8 @@ is a script that uses
 to log into a remote machine (presumably using a login password, so
 password authentication should be enabled, unless you've done some clever
 use of multiple identities).  By default it takes the keys listed by
-.Ql ssh -l
-and endeavours to install them on the remote machine.
+.Ql ssh-add -l
+and endeavours to install their public portion on the remote machine.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -46,14 +46,19 @@ Use the key(s) contained in
 .Ar identity_file
 rather than looking for identities via
 .Xr ssh-add 1
-or in the default
-.Pa ~/.ssh/id_rsa.pub .
+or in the default found in:
+.Pa ~/.ssh/ .
 If the filename does not end in
 .Pa .pub
 this is added. If called with an empty argument (i.e. 
 .Ql -i '' ) .
-it defaults to using 
-.Pa ~/.ssh/id_rsa.pub .
+it uses the default.  The default being the most recent file that matches:
+.Pa ~/.ssh/id*.pub ,
+so if you want to create a key that is not the one you want ssh-copy-id to use, either call it something that does not start with
+.Ql id
+or after creating the new key, use
+.Xr touch 1
+on your preferred key to reinstate it as the most recent.
 .It Fl p Ar port
 Port to connect to on the remote host.
 This can be specified on a
@@ -61,24 +66,29 @@ per-host basis in
 .Xr ssh 1 Ns 's
 configuration file.
 .El
+.Pp
 Default behaviour without
 .Fl i ,
 is to check if
 .Ql ssh-add -L
-provides any output, and if so uses that.  Otherwise it falls back to using the contents of 
-.Pa ~/.ssh/id_rsa.pub .
+provides any output, and if so uses that.
 Note that this results in the comment on the key being the filename that was given to
 .Nm ssh-add
 when the key was loaded into your
 .Nm ssh-agent
 rather than the comment contained in that file, which is a bit of a shame.
+Otherwise, if
+.Xr ssh-add 1
+provides no keys it uses the contents of the default identity file (as described in the
+.Fl i
+option).
 .Pp
 Once it has one or more fingerprints (by whatever means) it tries to
 log in with each key, to see if any of them are already installed
 (of course, if you are not using
 .Xr ssh-agent 1
 this may result in you being prompted for pass-phrases).
-It then assembles a list of those that failed to log in, which it then logs in for real, using ssh, and adds the keys to the remote server.
+It then assembles a list of those that failed to log in, and using ssh, enables logins with those keys on the remote server.
 By default it adds the keys by appending them to the remote user's
 .Pa ~/.ssh/authorized_keys
 (creating the file, and directory, if necessary).  It is also capable of detecting if the remote system is a NetScreen, and using it's 
