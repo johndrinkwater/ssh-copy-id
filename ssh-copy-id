@@ -41,7 +41,7 @@ while getopts 'i:p:h?' OPTION; do
       exit 1
     fi
     ;;
-    h|-help|\?)
+    h|\?)
       usage
     ;;
   esac;
@@ -49,14 +49,14 @@ done;
 
 shift $(($OPTIND - 1))
 
-if [ "$#" -lt 1 ]; then
+if [ $# != 1 ]; then
   usage
 fi;
 
 # drop a trailing colon
 USER_HOST=${1%:}
 
-if [ "$#" -lt 2 ] && [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1; then
+if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1; then
   GET_ID="ssh-add -L"
 fi
 
