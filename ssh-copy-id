@@ -22,7 +22,7 @@ while getopts 'i:p:h?' OPTION; do
   case "$OPTION" in
     i)
       if [ -n "$OPTARG" ]; then
-        if expr "$OPTARG" : ".*\.pub$" > /dev/null ; then
+        if expr "$OPTARG" : ".*\.pub$" >/dev/null ; then
           ID_FILE="$OPTARG"
         else
           ID_FILE="$OPTARG.pub"
@@ -34,7 +34,8 @@ while getopts 'i:p:h?' OPTION; do
       PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
     ;;
     p)
-    if [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
+    if [ "$OPTARG" -gt 0 >/dev/null 2>&1 ] &&
+       [ "$OPTARG" -lt 65536 >/dev/null 2>&1 ] ; then
       PORTOPTION="-p $OPTARG "
     else
       echo "Bad port '$OPTARG'" >&2
