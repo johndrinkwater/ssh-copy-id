@@ -13,6 +13,11 @@
 
 ID_FILE="$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)"
 
+usage () {
+  echo "Usage: $0 [-i identity_file] [-p port] [user@]hostname" >&2
+  exit 1
+}
+
 while getopts 'i:p:h?' OPTION; do
   case "$OPTION" in
     i)
@@ -22,6 +27,9 @@ while getopts 'i:p:h?' OPTION; do
         else
           ID_FILE="$OPTARG.pub"
         fi
+      fi
+      if [ ! -r "$OPTARG" ]; then
+        usage
       fi
       PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
     ;;
@@ -33,14 +41,17 @@ while getopts 'i:p:h?' OPTION; do
       exit 1
     fi
     ;;
-    h|\?)
-      echo "Usage: $0 [-i identity_file] [-p port] [user@]machine" >&2
-      exit 1
+    h|-help|\?)
+      usage
     ;;
   esac;
 done;
 
 shift $(($OPTIND - 1))
+
+if [ "$#" -lt 1 ]; then
+  usage
+fi;
 
 # drop a trailing colon
 USER_HOST=${1%:}
