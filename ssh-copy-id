@@ -27,9 +27,9 @@ while getopts 'i:p:h?' OPTION ; do
         else
           ID_FILE="$OPTARG.pub"
         fi
-      fi
-      if [ ! -r "$OPTARG" ] ; then
-        usage
+        if [ ! -r "$OPTARG" ] ; then
+          usage
+        fi
       fi
       PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE .pub)
       ;;
