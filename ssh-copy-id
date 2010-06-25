@@ -11,61 +11,61 @@
 # Shell script to install your public key(s) on a remote machine
 # See the ssh-copy-id(1) man page for details
 
-ID_FILE="$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)"
+ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)
 
 usage () {
   echo "Usage: $0 [-i identity_file] [-p port] [user@]hostname" >&2
   exit 1
 }
 
-while getopts 'i:p:h?' OPTION; do
+while getopts 'i:p:h?' OPTION ; do
   case "$OPTION" in
     i)
-      if [ -n "$OPTARG" ]; then
+      if [ -n "$OPTARG" ] ; then
         if expr "$OPTARG" : ".*\.pub$" >/dev/null ; then
           ID_FILE="$OPTARG"
         else
           ID_FILE="$OPTARG.pub"
         fi
       fi
-      if [ ! -r "$OPTARG" ]; then
+      if [ ! -r "$OPTARG" ] ; then
         usage
       fi
-      PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
-    ;;
+      PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE .pub)
+      ;;
     p)
-    if 2>/dev/null [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
-      PORTOPTION="-p $OPTARG "
-    else
-      echo "Bad port '$OPTARG'" >&2
-      exit 1
-    fi
-    ;;
+      if 2>/dev/null [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
+        PORTOPTION="-p $OPTARG "
+      else
+        echo "Bad port '$OPTARG'" >&2
+        exit 1
+      fi
+      ;;
     h|\?)
       usage
-    ;;
-  esac;
-done;
+      ;;
+  esac
+done
 
 shift $(($OPTIND - 1))
 
-if [ $# != 1 ]; then
+if [ $# != 1 ] ; then
   usage
-fi;
+fi
 
 # drop a trailing colon
 USER_HOST=${1%:}
 
-if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1; then
+if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-if [ -z "$(eval $GET_ID)" ] && [ -r "${ID_FILE}" ] ; then
-  GET_ID="cat ${ID_FILE}"
+if [ -z $(eval $GET_ID) ] && [ -r "$ID_FILE" ] ; then
+  GET_ID="cat \"$ID_FILE\""
   PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
 fi
 
-if [ -z "$(eval $GET_ID)" ]; then
+if [ -z $(eval $GET_ID) ] ; then
   echo "$0: ERROR: No identities found" >&2
   exit 1
 fi
@@ -78,8 +78,8 @@ populate_new_ids() {
   trap "rm -f $ID_FILE_TEMP" EXIT TERM INT QUIT
   NEW_IDS=$(
     eval $GET_ID | {
-      while line > $ID_FILE_TEMP; do
-        ssh -i ${PRIV_ID_FILE:-$ID_FILE_TEMP} \
+      while line > $ID_FILE_TEMP ; do
+        ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit >/dev/null 2>&1
 
@@ -91,7 +91,7 @@ populate_new_ids() {
   )
   rm -f "$ID_FILE_TEMP" && trap - EXIT TERM INT QUIT
 
-  if [ -z "$NEW_IDS" ]; then
+  if [ -z "$NEW_IDS" ] ; then
     printf "\n$0: WARNING: All keys were skipped because they already exist on the remote system.\n\n" >&2
     exit 0
   fi
@@ -104,22 +104,22 @@ case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
-      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
-      if [ $? == 255 ]; then
+      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
+      if [ $? == 255 ] ; then
 	echo "$0: WARNING: NetScreen only supports dsa keys" >&2
       else
         ADDED=$(($ADDED + 1))
       fi
     done
-    if [ -z "$ADDED" ]; then
+    if [ -z "$ADDED" ] ; then
       exit 1
     fi
     ;;
   *)
     # Assuming default being OpenSSH
     populate_new_ids $USER_HOST 0
-    printf "$NEW_IDS" | ssh $PORTOPTION $USER_HOST "umask 077; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
-    ADDED=$( { printf "$NEW_IDS"; echo; } | wc -l)
+    printf "$NEW_IDS" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    ADDED=$( { printf "$NEW_IDS" ; echo ; } | wc -l)
     ;;
 esac
 
