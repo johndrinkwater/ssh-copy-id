@@ -60,12 +60,12 @@ if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-if [ -z $(eval $GET_ID) ] && [ -r "$ID_FILE" ] ; then
+if [ -z "$(eval $GET_ID)" ] && [ -r "$ID_FILE" ] ; then
   GET_ID="cat \"$ID_FILE\""
   PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
 fi
 
-if [ -z $(eval $GET_ID) ] ; then
+if [ -z "$(eval $GET_ID)" ] ; then
   echo "$0: ERROR: No identities found" >&2
   exit 1
 fi
