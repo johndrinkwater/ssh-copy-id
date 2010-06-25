@@ -100,7 +100,7 @@ populate_new_ids() {
 REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $USER_HOST 2>&1 |
                  sed -ne 's/.*remote software version //p')
 
-case $REMOTE_VERSION in
+case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
