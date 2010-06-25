@@ -18,6 +18,15 @@ usage () {
   exit 1
 }
 
+use_id_file() {
+  GET_ID="cat \"$1\""
+  PRIV_ID_FILE=$(dirname "$1")/$(basename "$1" .pub)
+}
+
+if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
+  GET_ID="ssh-add -L"
+fi
+
 while getopts 'i:p:h?' OPTION ; do
   case "$OPTION" in
     i)
@@ -31,7 +40,7 @@ while getopts 'i:p:h?' OPTION ; do
           usage
         fi
       fi
-      PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE .pub)
+      use_id_file $ID_FILE
       ;;
     p)
       if 2>/dev/null [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
@@ -56,13 +65,8 @@ fi
 # drop a trailing colon
 USER_HOST=${1%:}
 
-if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
-  GET_ID="ssh-add -L"
-fi
-
 if [ -z "$(eval $GET_ID)" ] && [ -r "$ID_FILE" ] ; then
-  GET_ID="cat \"$ID_FILE\""
-  PRIV_ID_FILE=$(dirname $ID_FILE)/$(basename $ID_FILE ".pub")
+  use_id_file $ID_FILE
 fi
 
 if [ -z "$(eval $GET_ID)" ] ; then
