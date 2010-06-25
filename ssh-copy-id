@@ -82,7 +82,7 @@ populate_new_ids() {
         echo "$ID" > $ID_FILE_TEMP
           ssh -i ${PRIV_ID_FILE:-$ID_FILE_TEMP} \
               -o PreferredAuthentications=publickey \
-              -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit > /dev/null 2>&1
+              -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit >/dev/null 2>&1
 
         if [ "$?" != $SUCCESS ]; then
           if [ -z "$NEW_IDS" ]; then
@@ -110,7 +110,7 @@ case $REMOTE_VERSION in
   NetScreen*)
     populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
-      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $USER_HOST > /dev/null 2>&1
+      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "${KEY}" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
       if [ $? == 255 ]; then
 	echo "$0: WARNING: NetScreen only supports dsa keys" >&2
       else
