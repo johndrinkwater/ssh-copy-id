@@ -23,6 +23,14 @@ usage () {
 use_id_file() {
   GET_ID="cat \"$1\""
   PRIV_ID_FILE=$(dirname "$1")/$(basename "$1" .pub)
+
+  # check that the files are readable
+  for f in $1 $PRIV_ID_FILE ; do
+    ErrMSG=$( { : < $f ; } 2>&1 ) || {
+      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(echo $ErrMSG | sed -e 's/.*: *//')"
+      exit 1
+    }
+  done
 }
 
 if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
@@ -37,9 +45,6 @@ while getopts 'i:p:h?' OPTION ; do
           ID_FILE="$OPTARG"
         else
           ID_FILE="$OPTARG.pub"
-        fi
-        if [ ! -r "$OPTARG" ] ; then
-          usage
         fi
       fi
       use_id_file $ID_FILE
