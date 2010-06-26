@@ -84,6 +84,11 @@ populate_new_ids() {
     eval $GET_ID | {
       while read ID ; do
         printf "$ID\n" > $ID_FILE_TEMP
+
+        # the next line assumes $PRIV_ID_FILE only set if using a single id file - this
+        # assumption will break if we implement the possibility of multiple -i options.
+        # The point being that if file based, ssh needs the private key, which it cannot
+        # find if only given the contents of the .pub file in an unreleated tmpfile
         ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit >/dev/null 2>&1
