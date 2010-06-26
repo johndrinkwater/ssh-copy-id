@@ -1,5 +1,5 @@
 .ig \"  -*- nroff -*-
-Copyright (c) 1999-2010 Philip Hands Computing <http://www.hands.com/>
+Copyright (c) 1999-2010 hands.com Ltd. <http://hands.com/>
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -33,11 +33,21 @@ the original English.
 .Nm
 is a script that uses
 .Xr ssh 1
-to log into a remote machine (presumably using a login password, so
-password authentication should be enabled, unless you've done some clever
-use of multiple identities).  By default it takes the keys listed by
-.Ql ssh-add -l
-and endeavours to install their public portion on the remote machine.
+to log into a remote machine (presumably using a login password,
+so password authentication should be enabled, unless you've done some
+clever use of multiple identities).  It assembles a list of one or more
+fingerprints (as described below) and tries to log in with each key, to
+see if any of them are already installed (of course, if you are not using
+.Xr ssh-agent 1
+this may result in you being repeatedly prompted for pass-phrases).
+It then assembles a list of those that failed to log in, and using ssh,
+enables logins with those keys on the remote server.  By default it adds
+the keys by appending them to the remote user's
+.Pa ~/.ssh/authorized_keys
+(creating the file, and directory, if necessary).  It is also capable
+of detecting if the remote system is a NetScreen, and using it's
+.Ql set ssh pka-dsa key ...
+command instead.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -50,15 +60,17 @@ or in the default found in:
 .Pa ~/.ssh/ .
 If the filename does not end in
 .Pa .pub
-this is added. If called with an empty argument (i.e. 
-.Ql -i '' ) .
-it uses the default.  The default being the most recent file that matches:
-.Pa ~/.ssh/id*.pub ,
-so if you want to create a key that is not the one you want ssh-copy-id to use, either call it something that does not start with
-.Ql id
-or after creating the new key, use
-.Xr touch 1
-on your preferred key to reinstate it as the most recent.
+this is added.
+.Pp
+Note: option processing has changed since the original version of
+.Nm .
+You can no longer use
+.Fl i
+without an argument.  Use
+.Ql -i ''
+to use the
+.Em default identity file
+(see below).
 .It Fl p Ar port
 Port to connect to on the remote host.
 This can be specified on a
@@ -71,30 +83,81 @@ Default behaviour without
 .Fl i ,
 is to check if
 .Ql ssh-add -L
-provides any output, and if so uses that.
-Note that this results in the comment on the key being the filename that was given to
+provides any output, and if so uses that.  Note that this results in
+the comment on the key being the filename that was given to
 .Nm ssh-add
 when the key was loaded into your
 .Nm ssh-agent
 rather than the comment contained in that file, which is a bit of a shame.
 Otherwise, if
 .Xr ssh-add 1
-provides no keys it uses the contents of the default identity file (as described in the
-.Fl i
-option).
+provides no keys it uses the contents of the
+.Em default identity file .
 .Pp
-Once it has one or more fingerprints (by whatever means) it tries to
-log in with each key, to see if any of them are already installed
-(of course, if you are not using
+The
+.Em default identity file
+is the most recent file that matches:
+.Pa ~/.ssh/id*.pub ,
+so if you want to create a key that is not the one you want ssh-copy-id
+to use, either call it something that does not start with
+.Ql id
+or after creating the new key, use
+.Xr touch 1
+on your preferred key to reinstate it as the most recent.
+.Pp
+.Sh EXAMPLES
+If you have already installed keys from one system on a lot of remote
+hosts, and you then create a new key, on a new client machine, say,
+it can be difficult to keep track of which systems on which you've
+installed the new key.  One way of dealing with this is to load both
+the new key and old key(s) into your
+.Xr ssh-agent 1 .
+Load the new key first, without the
+.Fl c
+option, then load one or more old keys into the agent, possibly by
+ssh-ing to the client machine that has that old key, using the
+.Fl A
+option to allow agent forwarding:
+.Pp
+.D1 user@newclient$ ssh-add
+.D1 user@newclient$ ssh -A old.client
+.D1 user@oldl$ ssh-add -c
+.D1 No   ... prompt for pass-phrase ...
+.D1 user@old$ logoff
+.D1 user@newclient$ ssh someserver
+.Pp
+now, if the new key is installed on the server, you'll be allowed in
+unprompted, whereas if you only have the old key(s) enabled, you'll be
+asked for confirmation, which is your cue to log back out and run
+.Pp
+.D1 user@newclient$ ssh-copy-id -i '' someserver
+.Pp
+The reason you might want to specify the -i option in this case is to
+ensure that the comment on the installed key is the one from the
+.Pa .pub
+file, rather than just the filename that was loaded into you agent.
+It also ensures that only the id you intended is installed, rather than
+all the keys that you have in your
+.Xr ssh-agent 1 .
+Of course, you can specify another id, or use the contents of the
 .Xr ssh-agent 1
-this may result in you being prompted for pass-phrases).
-It then assembles a list of those that failed to log in, and using ssh, enables logins with those keys on the remote server.
-By default it adds the keys by appending them to the remote user's
-.Pa ~/.ssh/authorized_keys
-(creating the file, and directory, if necessary).  It is also capable of detecting if the remote system is a NetScreen, and using it's 
-.Ql set ssh pka-dsa key ...
-command instead.
+as you prefer.
 .Pp
+Having mentioned
+.Xr ssh-add 1 Ns 's
+.Fl c
+option, you might consider using this whenever using agent forwarding
+to avoid your key being hijacked, but it is much better to instead use
+.Xr ssh 1 Ns 's
+.Ar ProxyCommand
+option with
+.Xr netcat 1
+to bounce through remote servers while always doing direct end-to-end
+authentication. This way the middle hop(s) don't get access to your
+.Xr ssh-agent 1 .
+A web search for
+.Ql ssh proxycommand nc
+should prove enlightening.
 .Sh "SEE ALSO"
 .Xr ssh 1 ,
 .Xr ssh-agent 1 ,
