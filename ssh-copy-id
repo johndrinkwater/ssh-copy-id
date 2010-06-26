@@ -1,10 +1,12 @@
 #!/bin/sh
 
 # Copyright (c) 1999-2010 Philip Hands <phil@hands.com>
+#               2010 Adeodato =?iso-8859-1?Q?Sim=F3?= <asp16@alu.ua.es>
 #               2010 Eric Moret <eric.moret@gmail.com>
 #               2009 Xr <xr@i-jeuxvideo.com>
 #               2007 Justin Pryzby <justinpryzby@users.sourceforge.net>
 #               2004 Reini Urban <rurban@x-ray.at>
+#               2003 Colin Watson <cjwatson@debian.org>
 # Modification and redistribution is permitted provided that due credit
 # is given to the authors by leaving this copyright notice intact.
 
