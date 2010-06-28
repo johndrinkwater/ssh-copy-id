@@ -64,13 +64,6 @@ this is added.
 .Pp
 Note: option processing has changed since the original version of
 .Nm .
-You can no longer use
-.Fl i
-without an argument.  Use
-.Ql -i ''
-to use the
-.Em default identity file
-(see below).
 .It Fl p Ar port
 Port to connect to on the remote host.
 This can be specified on a
@@ -130,7 +123,7 @@ now, if the new key is installed on the server, you'll be allowed in
 unprompted, whereas if you only have the old key(s) enabled, you'll be
 asked for confirmation, which is your cue to log back out and run
 .Pp
-.D1 user@newclient$ ssh-copy-id -i '' someserver
+.D1 user@newclient$ ssh-copy-id -i someserver
 .Pp
 The reason you might want to specify the -i option in this case is to
 ensure that the comment on the installed key is the one from the

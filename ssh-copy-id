@@ -13,59 +13,79 @@
 # Shell script to install your public key(s) on a remote machine
 # See the ssh-copy-id(1) man page for details
 
-ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)
+DEFAULT_PUB_ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)
 
 usage () {
-  echo "Usage: $0 [-h|-?] [-i identity_file] [-p port] [user@]hostname" >&2
+  echo "Usage: $0 [-h|-?] [-i [identity_file]] [-p port] [user@]hostname" >&2
   exit 1
 }
 
 use_id_file() {
   local L_ID_FILE=$1
 
-  GET_ID="cat \"$L_ID_FILE\""
-  PRIV_ID_FILE=$(dirname "$L_ID_FILE")/$(basename "$L_ID_FILE" .pub)
+  if expr "$L_ID_FILE" : ".*\.pub$" >/dev/null ; then
+    PUB_ID_FILE="$L_ID_FILE"
+  else
+    PUB_ID_FILE="$L_ID_FILE.pub"
+  fi
+
+  PRIV_ID_FILE=$(dirname "$PUB_ID_FILE")/$(basename "$PUB_ID_FILE" .pub)
 
   # check that the files are readable
-  for f in $L_ID_FILE $PRIV_ID_FILE ; do
+  for f in $PUB_ID_FILE $PRIV_ID_FILE ; do
     ErrMSG=$( { : < $f ; } 2>&1 ) || {
       printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(echo $ErrMSG | sed -e 's/.*: *//')"
       exit 1
     }
   done
+  GET_ID="cat \"$PUB_ID_FILE\""
 }
 
 if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-while getopts 'i:p:h?' OPTION ; do
-  case "$OPTION" in
-    i)
-      if [ -n "$OPTARG" ] ; then
-        if expr "$OPTARG" : ".*\.pub$" >/dev/null ; then
-          ID_FILE="$OPTARG"
-        else
-          ID_FILE="$OPTARG.pub"
-        fi
-      fi
-      use_id_file $ID_FILE
+GETOPT_PARSED=$(getopt --options 'i::p:h?' --name "$0" --quiet -- "$@")
+
+eval set -- "$GETOPT_PARSED"
+while true ; do
+  case "$1" in
+    -i)
+      case "$2" in
+        '')
+          CHECK_EXTRA_PARAM=1
+          use_id_file $DEFAULT_PUB_ID_FILE
+          ;;
+        *)
+          use_id_file $2
+          ;;
+      esac
+      shift 2
       ;;
-    p)
-      if 2>/dev/null [ "$OPTARG" -gt 0 ] && [ "$OPTARG" -lt 65536 ] ; then
-        PORTOPTION="-p $OPTARG "
+    -p)
+      if 2>/dev/null [ "$2" -gt 0 ] && [ "$2" -lt 65536 ] ; then
+        PORTOPTION="-p $2 "
       else
-        echo "Bad port '$OPTARG'" >&2
+        echo "Bad port '$2'" >&2
         exit 1
       fi
+      shift 2
       ;;
-    h|\?)
+    -h|-\?)
       usage
+      shift
+      ;;
+    --)
+      shift
+      break
       ;;
   esac
 done
 
-shift $(($OPTIND - 1))
+if [ -n "$CHECK_EXTRA_PARAM" ] && [ $# == 2 ] ; then
+  use_id_file $1
+  shift
+fi
 
 if [ $# != 1 ] ; then
   usage
@@ -74,8 +94,8 @@ fi
 # drop a trailing colon
 USER_HOST=${1%:}
 
-if [ -z "$(eval $GET_ID)" ] && [ -r "$ID_FILE" ] ; then
-  use_id_file $ID_FILE
+if [ -z "$(eval $GET_ID)" ] && [ -r "$PUB_ID_FILE" ] ; then
+  use_id_file $PUB_ID_FILE
 fi
 
 if [ -z "$(eval $GET_ID)" ] ; then
