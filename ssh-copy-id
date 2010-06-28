@@ -16,7 +16,7 @@
 ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)
 
 usage () {
-  echo "Usage: $0 [-i identity_file] [-p port] [user@]hostname" >&2
+  echo "Usage: $0 [-h|-?] [-i identity_file] [-p port] [user@]hostname" >&2
   exit 1
 }
 
