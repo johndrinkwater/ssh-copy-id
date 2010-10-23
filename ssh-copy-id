@@ -118,18 +118,37 @@ populate_new_ids() {
         # assumption will break if we implement the possibility of multiple -i options.
         # The point being that if file based, ssh needs the private key, which it cannot
         # find if only given the contents of the .pub file in an unreleated tmpfile
-        ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
-            -o PreferredAuthentications=publickey \
-            -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit >/dev/null 2>&1
+        RESULT=$(
+          { {
+            ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
+                -o PreferredAuthentications=publickey \
+                -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit 2>&1
+            [ "$?" = "L_$SUCCESS" ] && printf OK >&2
+          } | {
+            grep -q 'Could not resolve hostname' && printf ENORESOLVE
+          } ; } 2>&1 # catch "OK"
+        )
 
-        if [ "$?" != "$L_SUCCESS" ] ; then
-          printf "$ID\n"
-        fi
+        case "$RESULT" in
+          OK)
+            : output nothing, as that key worked
+            ;;
+          ENORESOLVE)
+            printf "ENORESOLVE\n"
+            ;;
+          *)
+            printf "$ID\n"
+            ;;
+        esac
       done
     }
   )
   rm -f "$ID_FILE_TEMP" && trap - EXIT TERM INT QUIT
 
+  if expr "$NEW_IDS" : "^ENORESOLVE" >/dev/null ; then
+    printf "\n$0: ERROR: Could not resolve hostname.\n\n" >&2
+    exit 1
+  fi
   if [ -z "$NEW_IDS" ] ; then
     printf "\n$0: WARNING: All keys were skipped because they already exist on the remote system.\n\n" >&2
     exit 0
