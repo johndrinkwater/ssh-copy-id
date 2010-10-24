@@ -123,7 +123,7 @@ populate_new_ids() {
             ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
                 -o PreferredAuthentications=publickey \
                 -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit 2>&1
-            [ "$?" = "L_$SUCCESS" ] && printf OK >&2
+            [ "$?" = "$L_SUCCESS" ] && printf OK >&2
           } | {
             grep -q 'Could not resolve hostname' && printf ENORESOLVE
           } ; } 2>&1 # catch "OK"
