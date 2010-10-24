@@ -48,24 +48,25 @@ enables logins with those keys on the remote server.  By default it adds
 the keys by appending them to the remote user's
 .Pa ~/.ssh/authorized_keys
 (creating the file, and directory, if necessary).  It is also capable
-of detecting if the remote system is a NetScreen, and using it's
+of detecting if the remote system is a NetScreen, and using its
 .Ql set ssh pka-dsa key ...
 command instead.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl i Ar identity_file
-Use the key(s) contained in
+Use only the key(s) contained in
 .Ar identity_file
-rather than looking for identities via
+(rather than looking for identities via
 .Xr ssh-add 1
-or in the default found in:
-.Pa ~/.ssh/ .
+or in the default_ID_file).
 If the filename does not end in
 .Pa .pub
-this is added.
+this is added.  If the filename is omitted, the default_ID_file is used.
 .Pp
-Note: option processing has changed since the original version of
+Note that this can be used to ensure that the keys copied have the
+comment one prefers and/or extra options applied, by ensuring that the
+key file has these set as preferred before the copy is attempted.
 .Nm .
 .It Fl p Ar port
 Port to connect to on the remote host.
@@ -74,7 +75,7 @@ per-host basis in
 .Xr ssh 1 Ns 's
 configuration file.
 .It Fl n
-do a dry-run.  Instead of instlling keys on the remote system simply
+do a dry-run.  Instead of installing keys on the remote system simply
 prints the key(s) that would have been installed.
 .It Fl h , Fl ?
 Print Usage summary
@@ -92,11 +93,10 @@ when the key was loaded into your
 rather than the comment contained in that file, which is a bit of a shame.
 Otherwise, if
 .Xr ssh-add 1
-provides no keys it uses the contents of the
-.Em default identity file .
+provides no keys it uses the contents of the default_ID_file.
 .Pp
 The
-.Em default identity file
+.Em default_ID_file
 is the most recent file that matches:
 .Pa ~/.ssh/id*.pub ,
 so if you want to create a key that is not the one you want ssh-copy-id
