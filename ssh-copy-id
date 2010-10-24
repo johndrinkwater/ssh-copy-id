@@ -16,7 +16,7 @@
 DEFAULT_PUB_ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | head -n 1)
 
 usage () {
-  echo "Usage: $0 [-h|-?] [-i [identity_file]] [-p port] [user@]hostname" >&2
+  echo "Usage: $0 [-h|-?|-n] [-i [identity_file]] [-p port] [user@]hostname" >&2
   exit 1
 }
 
@@ -45,7 +45,7 @@ if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-GETOPT_PARSED=$(getopt --options 'i::p:h?' --name "$0" --quiet -- "$@")
+GETOPT_PARSED=$(getopt --options 'i::p:nh?' --name "$0" --quiet -- "$@")
 
 eval set -- "$GETOPT_PARSED"
 while true ; do
@@ -70,6 +70,10 @@ while true ; do
         exit 1
       fi
       shift 2
+      ;;
+    -n)
+      DRY_RUN=1
+      shift
       ;;
     -h|-\?)
       usage
@@ -162,7 +166,7 @@ case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
-      printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
+      [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
       if [ $? == 255 ] ; then
         echo "$0: WARNING: NetScreen only supports dsa keys" >&2
       else
@@ -176,10 +180,15 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming default being OpenSSH
     populate_new_ids $USER_HOST 0
-    printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
     ADDED=$( { printf "$NEW_IDS" ; echo ; } | wc -l)
     ;;
 esac
+
+if [ "$DRY_RUN" ] ; then
+    echo "Would have added the following keys:"
+    printf "\n$NEW_IDS\n"
+fi
 
 cat <<-EOF
 
