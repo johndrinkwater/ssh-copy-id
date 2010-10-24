@@ -86,7 +86,7 @@ while true ; do
   esac
 done
 
-if [ -n "$CHECK_EXTRA_PARAM" ] && [ $# == 2 ] ; then
+if [ -n "$CHECK_EXTRA_PARAM" ] && [ $# = 2 ] ; then
   use_id_file $1
   shift
 fi
@@ -167,7 +167,7 @@ case "$REMOTE_VERSION" in
     populate_new_ids $USER_HOST 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
       [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
-      if [ $? == 255 ] ; then
+      if [ $? = 255 ] ; then
         echo "$0: WARNING: NetScreen only supports dsa keys" >&2
       else
         ADDED=$(($ADDED + 1))
