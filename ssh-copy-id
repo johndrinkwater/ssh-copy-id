@@ -178,8 +178,10 @@ case "$REMOTE_VERSION" in
 esac
 
 if [ "$DRY_RUN" ] ; then
-    echo "Would have added the following keys:"
-    printf "\n$NEW_IDS\n"
+  echo =-=-=-=-=-=-=-=
+  echo "Would have added the following key(s):"
+  printf "\n$NEW_IDS\n"
+  echo =-=-=-=-=-=-=-=
 fi
 
 cat <<-EOF
