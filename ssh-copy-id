@@ -113,7 +113,7 @@ populate_new_ids() {
   local L_SUCCESS="$1"
 
   local L_TMP_ID_FILE=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
-  trap "rm -f $L_TMP_ID_FILE" EXIT TERM INT QUIT
+  trap "rm -f $L_TMP_ID_FILE*" EXIT TERM INT QUIT
   NEW_IDS=$(
     eval $GET_ID | {
       while read ID ; do
@@ -123,35 +123,26 @@ populate_new_ids() {
         # assumption will break if we implement the possibility of multiple -i options.
         # The point being that if file based, ssh needs the private key, which it cannot
         # find if only given the contents of the .pub file in an unreleated tmpfile
-        RESULT=$(
-          { {
-            ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
-                -o PreferredAuthentications=publickey \
-                -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>&1 </dev/null
-            [ "$?" = "$L_SUCCESS" ] && printf OK >&2
-          } | {
-            grep -q 'Could not resolve hostname' && printf ENORESOLVE
-          } ; } 2>&1 # catch "OK"
-        )
+        ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
+            -o PreferredAuthentications=publickey \
+            -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>$L_TMP_ID_FILE.stderr </dev/null
+        if [ "$?" = "$L_SUCCESS" ] ; then
+          : > $L_TMP_ID_FILE 
+        else
+          if ! grep -q 'Permission denied' $L_TMP_ID_FILE.stderr ; then
+            sed -e 's/^/ERROR: /' <$L_TMP_ID_FILE.stderr >$L_TMP_ID_FILE
+            cat >/dev/null #consume the other keys, causing loop to end
+          fi
+        fi
 
-        case "$RESULT" in
-          OK)
-            : output nothing, as that key worked
-            ;;
-          ENORESOLVE)
-            printf "ENORESOLVE\n"
-            ;;
-          *)
-            printf "$ID\n"
-            ;;
-        esac
+        cat $L_TMP_ID_FILE
       done
     }
   )
-  rm -f "$L_TMP_ID_FILE" && trap - EXIT TERM INT QUIT
+  rm -f $L_TMP_ID_FILE* && trap - EXIT TERM INT QUIT
 
-  if expr "$NEW_IDS" : "^ENORESOLVE" >/dev/null ; then
-    printf "\n$0: ERROR: Could not resolve hostname.\n\n" >&2
+  if expr "$NEW_IDS" : "^ERROR: " >/dev/null ; then
+    printf "\n$0: $NEW_IDS\n\n" >&2
     exit 1
   fi
   if [ -z "$NEW_IDS" ] ; then
