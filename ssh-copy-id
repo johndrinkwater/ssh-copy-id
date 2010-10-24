@@ -112,12 +112,12 @@ fi
 populate_new_ids() {
   local L_SUCCESS="$1"
 
-  ID_FILE_TEMP=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
-  trap "rm -f $ID_FILE_TEMP" EXIT TERM INT QUIT
+  local L_TMP_ID_FILE=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
+  trap "rm -f $L_TMP_ID_FILE" EXIT TERM INT QUIT
   NEW_IDS=$(
     eval $GET_ID | {
       while read ID ; do
-        printf "$ID\n" > $ID_FILE_TEMP
+        printf "$ID\n" > $L_TMP_ID_FILE
 
         # the next line assumes $PRIV_ID_FILE only set if using a single id file - this
         # assumption will break if we implement the possibility of multiple -i options.
@@ -125,7 +125,7 @@ populate_new_ids() {
         # find if only given the contents of the .pub file in an unreleated tmpfile
         RESULT=$(
           { {
-            ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
+            ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
                 -o PreferredAuthentications=publickey \
                 -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>&1 </dev/null
             [ "$?" = "$L_SUCCESS" ] && printf OK >&2
@@ -148,7 +148,7 @@ populate_new_ids() {
       done
     }
   )
-  rm -f "$ID_FILE_TEMP" && trap - EXIT TERM INT QUIT
+  rm -f "$L_TMP_ID_FILE" && trap - EXIT TERM INT QUIT
 
   if expr "$NEW_IDS" : "^ENORESOLVE" >/dev/null ; then
     printf "\n$0: ERROR: Could not resolve hostname.\n\n" >&2
