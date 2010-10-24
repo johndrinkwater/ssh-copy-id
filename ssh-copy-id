@@ -107,9 +107,10 @@ if [ -z "$(eval $GET_ID)" ] ; then
   exit 1
 fi
 
+# populate_new_ids() uses several global variables ($USER_HOST, $PORTOPTION ...)
+# and has the side effect of setting $NEW_IDS
 populate_new_ids() {
-  local L_USER_HOST="$1"
-  local L_SUCCESS="$2"
+  local L_SUCCESS="$1"
 
   ID_FILE_TEMP=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
   trap "rm -f $ID_FILE_TEMP" EXIT TERM INT QUIT
@@ -126,7 +127,7 @@ populate_new_ids() {
           { {
             ssh -i "${PRIV_ID_FILE:-$ID_FILE_TEMP}" \
                 -o PreferredAuthentications=publickey \
-                -o IdentitiesOnly=yes $PORTOPTION $L_USER_HOST exit 2>&1 </dev/null
+                -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>&1 </dev/null
             [ "$?" = "$L_SUCCESS" ] && printf OK >&2
           } | {
             grep -q 'Could not resolve hostname' && printf ENORESOLVE
@@ -164,7 +165,7 @@ REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $USER_HOST 2
 
 case "$REMOTE_VERSION" in
   NetScreen*)
-    populate_new_ids $USER_HOST 1
+    populate_new_ids 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
       [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
       if [ $? = 255 ] ; then
@@ -179,7 +180,7 @@ case "$REMOTE_VERSION" in
     ;;
   *)
     # Assuming default being OpenSSH
-    populate_new_ids $USER_HOST 0
+    populate_new_ids 0
     [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
     ADDED=$( { printf "$NEW_IDS" ; echo ; } | wc -l)
     ;;
