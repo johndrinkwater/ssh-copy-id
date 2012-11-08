@@ -173,7 +173,7 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming default being OpenSSH
     populate_new_ids 0
-    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> .ssh/authorized_keys" || exit 1
+    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "umask 077 ; mkdir -p .ssh ; cat >> ~/.ssh/authorized_keys" || exit 1
     ADDED=$(printf "$NEW_IDS\n" | wc -l)
     ;;
 esac
