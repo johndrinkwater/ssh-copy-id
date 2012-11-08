@@ -122,7 +122,7 @@ populate_new_ids() {
         # the next line assumes $PRIV_ID_FILE only set if using a single id file - this
         # assumption will break if we implement the possibility of multiple -i options.
         # The point being that if file based, ssh needs the private key, which it cannot
-        # find if only given the contents of the .pub file in an unreleated tmpfile
+        # find if only given the contents of the .pub file in an unrelated tmpfile
         ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>$L_TMP_ID_FILE.stderr </dev/null
