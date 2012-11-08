@@ -151,8 +151,9 @@ option, you might consider using this whenever using agent forwarding
 to avoid your key being hijacked, but it is much better to instead use
 .Xr ssh 1 Ns 's
 .Ar ProxyCommand
-option with
-.Xr netcat 1
+and 
+.Fl W
+option,
 to bounce through remote servers while always doing direct end-to-end
 authentication. This way the middle hop(s) don't get access to your
 .Xr ssh-agent 1 .
