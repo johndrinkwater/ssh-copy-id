@@ -21,7 +21,7 @@ usage () {
 }
 
 use_id_file() {
-  local L_ID_FILE=$1
+  local L_ID_FILE="$1"
 
   if expr "$L_ID_FILE" : ".*\.pub$" >/dev/null ; then
     PUB_ID_FILE="$L_ID_FILE"
@@ -54,10 +54,10 @@ while true ; do
       case "$2" in
         '')
           CHECK_EXTRA_PARAM=1
-          use_id_file $DEFAULT_PUB_ID_FILE
+          use_id_file "$DEFAULT_PUB_ID_FILE"
           ;;
         *)
-          use_id_file $2
+          use_id_file "$2"
           ;;
       esac
       shift 2
@@ -87,7 +87,7 @@ while true ; do
 done
 
 if [ -n "$CHECK_EXTRA_PARAM" ] && [ $# = 2 ] ; then
-  use_id_file $1
+  use_id_file "$1"
   shift
 fi
 
@@ -99,7 +99,7 @@ fi
 USER_HOST=$(echo $1 | sed 's/:$//')
 
 if [ -z "$(eval $GET_ID)" ] && [ -r "$PUB_ID_FILE" ] ; then
-  use_id_file $PUB_ID_FILE
+  use_id_file "$PUB_ID_FILE"
 fi
 
 if [ -z "$(eval $GET_ID)" ] ; then
