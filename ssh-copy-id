@@ -96,7 +96,7 @@ if [ $# != 1 ] ; then
 fi
 
 # drop a trailing colon
-USER_HOST=${1%:}
+USER_HOST=$(echo $1 | sed 's/:$//')
 
 if [ -z "$(eval $GET_ID)" ] && [ -r "$PUB_ID_FILE" ] ; then
   use_id_file $PUB_ID_FILE
