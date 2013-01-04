@@ -98,13 +98,15 @@ provides no keys it uses the contents of the default_ID_file.
 The
 .Em default_ID_file
 is the most recent file that matches:
-.Pa ~/.ssh/id*.pub ,
-so if you want to create a key that is not the one you want ssh-copy-id
-to use, either call it something that does not start with
-.Ql id
-or after creating the new key, use
+.Pa ~/.ssh/*.pub ,
+(excluding those that match
+.Pa ~/.ssh/*-cert.pub )
+so if you create a key that is not the one you want ssh-copy-id
+to use, just use
 .Xr touch 1
-on your preferred key to reinstate it as the most recent.
+on your preferred key's 
+.Pa .pub
+file to reinstate it as the most recent.
 .Pp
 .Sh EXAMPLES
 If you have already installed keys from one system on a lot of remote
