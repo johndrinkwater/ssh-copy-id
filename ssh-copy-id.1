@@ -28,13 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .Nm ssh-copy-id
 .Nd use locally available keys to authorise logins on a remote machine
 .Sh SYNOPSIS
-.Nm ssh-copy-id
+.Nm
 .Op Fl n
 .Op Fl i Op Ar identity_file
 .Op Fl p Ar port
 .Op Ar user Ns @ Ns
 .Ar hostname
-.Nm ssh-copy-id
+.Nm
 .Fl h | Fl ?
 .br
 .Sh DESCRIPTION
@@ -64,15 +64,17 @@ Use only the key(s) contained in
 .Ar identity_file
 (rather than looking for identities via
 .Xr ssh-add 1
-or in the default_ID_file).
+or in the
+.Ic default_ID_file ) .
 If the filename does not end in
 .Pa .pub
-this is added.  If the filename is omitted, the default_ID_file is used.
+this is added.  If the filename is omitted, the 
+.Ic default_ID_file
+is used.
 .Pp
 Note that this can be used to ensure that the keys copied have the
 comment one prefers and/or extra options applied, by ensuring that the
 key file has these set as preferred before the copy is attempted.
-.Nm .
 .It Fl p Ar port
 Port to connect to on the remote host.
 This can be specified on a
@@ -90,23 +92,26 @@ Default behaviour without
 .Fl i ,
 is to check if
 .Ql ssh-add -L
-provides any output, and if so uses that.  Note that this results in
+provides any output, and if so those keys are used.  Note that this results in
 the comment on the key being the filename that was given to
-.Nm ssh-add
+.Xr ssh-add 1
 when the key was loaded into your
-.Nm ssh-agent
+.Xr ssh-agent 1
 rather than the comment contained in that file, which is a bit of a shame.
 Otherwise, if
 .Xr ssh-add 1
-provides no keys it uses the contents of the default_ID_file.
+provides no keys contents of the 
+.Ic default_ID_file
+will be used.
 .Pp
 The
-.Em default_ID_file
+.Ic default_ID_file
 is the most recent file that matches:
 .Pa ~/.ssh/*.pub ,
 (excluding those that match
 .Pa ~/.ssh/*-cert.pub )
-so if you create a key that is not the one you want ssh-copy-id
+so if you create a key that is not the one you want
+.Nm
 to use, just use
 .Xr touch 1
 on your preferred key's 
