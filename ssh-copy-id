@@ -178,9 +178,14 @@ case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids 1
     for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
+      KEY_NO=$(($KEY_NO + 1))
+      echo "$KEY" | grep -q ssh-dss || {
+         echo "$0: WARNING: Non-dsa key (#$KEY_NO) skipped (NetScreen only supports DSA keys)" >&2
+         continue
+      }
       [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
       if [ $? = 255 ] ; then
-        echo "$0: WARNING: NetScreen only supports dsa keys" >&2
+        echo "$0: ERROR: installation of key #$KEY_NO failed (please report a bug describing what caused this, so that we can make this message useful)" >&2
       else
         ADDED=$(($ADDED + 1))
       fi
