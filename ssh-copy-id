@@ -147,7 +147,7 @@ populate_new_ids() {
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>$L_TMP_ID_FILE.stderr </dev/null
         if [ "$?" = "$L_SUCCESS" ] ; then
-          : > $L_TMP_ID_FILE 
+          : > $L_TMP_ID_FILE
         else
           if ! grep -q 'Permission denied' $L_TMP_ID_FILE.stderr ; then
             sed -e 's/^/ERROR: /' <$L_TMP_ID_FILE.stderr >$L_TMP_ID_FILE
