@@ -122,6 +122,12 @@ if [ -z "$(eval $GET_ID)" ] && [ -r "$PUB_ID_FILE" ] ; then
   use_id_file "$PUB_ID_FILE"
 fi
 
+# No keys were specified and none were found within the agent, so fallback to
+# default public keys
+if [ -z "$(eval $GET_ID)" ] ; then
+  use_id_file "$DEFAULT_PUB_ID_FILE"
+fi
+
 if [ -z "$(eval $GET_ID)" ] ; then
   echo "$0: ERROR: No identities found" >&2
   exit 1
