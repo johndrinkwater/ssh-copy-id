@@ -118,7 +118,7 @@ fi
 # drop a trailing colon
 USER_HOST=$(echo $1 | sed 's/:$//')
 
-if [ -z "$(eval $GET_ID)" ] && [ -r "$PUB_ID_FILE" ] ; then
+if [ -z "$(eval $GET_ID)" ] && [ -r "${PUB_ID_FILE:=$DEFAULT_PUB_ID_FILE}" ] ; then
   use_id_file "$PUB_ID_FILE"
 fi
 
