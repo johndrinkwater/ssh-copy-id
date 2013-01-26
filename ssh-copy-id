@@ -71,6 +71,11 @@ eval set -- "$GETOPT_PARSED"
 while true ; do
   case "$1" in
     -i)
+      [ "${SEEN_OPT_I}" ] || {
+        printf "\n%s: ERROR: -i option must not be specified more than once\n\n" "$0"
+        usage
+      }
+      SEEN_OPT_I="yes"
       case "$2" in
         '')
           CHECK_EXTRA_PARAM=1
