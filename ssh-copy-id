@@ -199,10 +199,10 @@ case "$REMOTE_VERSION" in
     # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
     populate_new_ids 0
     [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "
-umask 077 ;
-mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys || exit 1 ;
-type restorecon >/dev/null 2>&1 && restorecon -F .ssh .ssh/authorized_keys ;
-: " || exit 1
+		umask 077 ;
+		mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys || exit 1 ;
+		! type restorecon >/dev/null 2>&1 || restorecon -F .ssh .ssh/authorized_keys" \
+      || exit 1
     ADDED=$(printf "$NEW_IDS\n" | wc -l)
     ;;
 esac
