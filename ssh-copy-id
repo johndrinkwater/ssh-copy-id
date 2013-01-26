@@ -175,6 +175,7 @@ populate_new_ids() {
     printf "\n$0: WARNING: All keys were skipped because they already exist on the remote system.\n\n" >&2
     exit 0
   fi
+  printf "$0: INFO: %d key(s) remain to be installed -- if you are prompted now it is to install the new keys\n" "$(printf "$NEW_IDS\n" | wc -l)" >&2
 }
 
 REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $USER_HOST 2>&1 |
