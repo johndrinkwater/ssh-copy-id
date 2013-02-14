@@ -137,6 +137,7 @@ fi
 populate_new_ids() {
   local L_SUCCESS="$1"
 
+  umask 0177
   local L_TMP_ID_FILE=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
   trap "rm -f $L_TMP_ID_FILE*" EXIT TERM INT QUIT
   printf "$0: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n" >&2
