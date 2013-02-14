@@ -65,7 +65,7 @@ if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-GETOPT_PARSED=$(getopt --options 'i::p:nh?' --name "$0" --quiet -- "$@")
+GETOPT_PARSED=$(getopt --options 'i::o:p:nh?' --name "$0" --quiet -- "$@")
 
 eval set -- "$GETOPT_PARSED"
 while true ; do
@@ -87,9 +87,13 @@ while true ; do
       esac
       shift 2
       ;;
+    -o)
+      SSH_OPTS="$SSH_OPTS \"-o$2\" "
+      shift 2
+      ;;
     -p)
       if 2>/dev/null [ "$2" -gt 0 ] && [ "$2" -lt 65536 ] ; then
-        PORTOPTION="-p $2 "
+        SSH_OPTS="$SSH_OPTS -p $2"
       else
         echo "Bad port '$2'" >&2
         exit 1
@@ -132,7 +136,7 @@ if [ -z "$(eval $GET_ID)" ] ; then
   exit 1
 fi
 
-# populate_new_ids() uses several global variables ($USER_HOST, $PORTOPTION ...)
+# populate_new_ids() uses several global variables ($USER_HOST, $SSH_OPTS ...)
 # and has the side effect of setting $NEW_IDS
 populate_new_ids() {
   local L_SUCCESS="$1"
@@ -152,7 +156,7 @@ populate_new_ids() {
         # find if only given the contents of the .pub file in an unrelated tmpfile
         ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
             -o PreferredAuthentications=publickey \
-            -o IdentitiesOnly=yes $PORTOPTION $USER_HOST exit 2>$L_TMP_ID_FILE.stderr </dev/null
+            -o IdentitiesOnly=yes $SSH_OPTS $USER_HOST exit 2>$L_TMP_ID_FILE.stderr </dev/null
         if [ "$?" = "$L_SUCCESS" ] ; then
           : > $L_TMP_ID_FILE
         else
@@ -179,7 +183,7 @@ populate_new_ids() {
   printf "$0: INFO: %d key(s) remain to be installed -- if you are prompted now it is to install the new keys\n" "$(printf "$NEW_IDS\n" | wc -l)" >&2
 }
 
-REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $PORTOPTION $USER_HOST 2>&1 |
+REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' $SSH_OPTS $USER_HOST 2>&1 |
                  sed -ne 's/.*remote software version //p')
 
 case "$REMOTE_VERSION" in
@@ -191,7 +195,7 @@ case "$REMOTE_VERSION" in
          echo "$0: WARNING: Non-dsa key (#$KEY_NO) skipped (NetScreen only supports DSA keys)" >&2
          continue
       }
-      [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $PORTOPTION $USER_HOST >/dev/null 2>&1
+      [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T $SSH_OPTS $USER_HOST >/dev/null 2>&1
       if [ $? = 255 ] ; then
         echo "$0: ERROR: installation of key #$KEY_NO failed (please report a bug describing what caused this, so that we can make this message useful)" >&2
       else
@@ -205,7 +209,7 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
     populate_new_ids 0
-    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $PORTOPTION $USER_HOST "
+    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh $SSH_OPTS $USER_HOST "
 		umask 077 ;
 		mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys || exit 1 ;
 		! type restorecon >/dev/null 2>&1 || restorecon -F .ssh .ssh/authorized_keys" \
@@ -225,7 +229,7 @@ cat <<-EOF
 
 	Number of key(s) added: $ADDED
 
-	Now try logging into the machine, with "ssh $PORTOPTION'$USER_HOST'", and check
+	Now try logging into the machine, with "ssh $SSH_OPTS${SSH_OPTS:+ }'$USER_HOST'", and check
 	to make sure we haven't added extra keys that you weren't expecting.
 
 EOF
