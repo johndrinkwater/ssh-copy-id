@@ -156,11 +156,11 @@ populate_new_ids() {
   umask 0177
   local L_TMP_ID_FILE=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
   trap "rm -f $L_TMP_ID_FILE*" EXIT TERM INT QUIT
-  printf "$0: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n" >&2
+  printf '%s: INFO: attempting to log in with the new key(s), to filter out any that are already installed\n' "$0" >&2
   NEW_IDS=$(
     eval $GET_ID | {
       while read ID ; do
-        printf "$ID\n" > $L_TMP_ID_FILE
+        printf '%s\n' "$ID" > $L_TMP_ID_FILE
 
         # the next line assumes $PRIV_ID_FILE only set if using a single id file - this
         # assumption will break if we implement the possibility of multiple -i options.
@@ -185,14 +185,14 @@ populate_new_ids() {
   rm -f $L_TMP_ID_FILE* && trap - EXIT TERM INT QUIT
 
   if expr "$NEW_IDS" : "^ERROR: " >/dev/null ; then
-    printf "\n$0: $NEW_IDS\n\n" >&2
+    printf '\n%s: %s\n\n' "$0" "$NEW_IDS" >&2
     exit 1
   fi
   if [ -z "$NEW_IDS" ] ; then
-    printf "\n$0: WARNING: All keys were skipped because they already exist on the remote system.\n\n" >&2
+    printf '\n%s: WARNING: All keys were skipped because they already exist on the remote system.\n\n' "$0" >&2
     exit 0
   fi
-  printf "$0: INFO: %d key(s) remain to be installed -- if you are prompted now it is to install the new keys\n" "$(printf "$NEW_IDS\n" | wc -l)" >&2
+  printf '%s: INFO: %d key(s) remain to be installed -- if you are prompted now it is to install the new keys\n' "$0" "$(printf '%s\n' "$NEW_IDS" | wc -l)" >&2
 }
 
 REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' "$@" 2>&1 |
@@ -221,12 +221,12 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
     populate_new_ids 0
-    [ "$DRY_RUN" ] || printf "\n$NEW_IDS\n" | ssh "$@" "
+    [ "$DRY_RUN" ] || printf '\n%s\n' "$NEW_IDS" | ssh "$@" "
 		umask 077 ;
 		mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys || exit 1 ;
 		! type restorecon >/dev/null 2>&1 || restorecon -F .ssh .ssh/authorized_keys" \
       || exit 1
-    ADDED=$(printf "$NEW_IDS\n" | wc -l)
+    ADDED=$(printf '%s\n' "$NEW_IDS" | wc -l)
     ;;
 esac
 
