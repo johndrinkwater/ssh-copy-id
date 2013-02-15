@@ -59,7 +59,7 @@ use_id_file() {
   # check that the files are readable
   for f in $PUB_ID_FILE $PRIV_ID_FILE ; do
     ErrMSG=$( { : < $f ; } 2>&1 ) || {
-      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(echo $ErrMSG | sed -e 's/.*: *//')"
+      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(printf %s "$ErrMSG" | sed -e 's/.*: *//')"
       exit 1
     }
   done
@@ -100,7 +100,7 @@ while true ; do
       if 2>/dev/null [ "$2" -gt 0 ] && [ "$2" -lt 65536 ] ; then
         SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }-p '$(quote "$2")'"
       else
-        echo "Bad port '$2'" >&2
+        printf "Bad port '%s'" "$2" >&2
         exit 1
       fi
       shift 2
@@ -130,7 +130,7 @@ if [ $# != 1 ] ; then
 fi
 
 # drop trailing colon
-USER_HOST=$(echo $1 | sed 's/:$//')
+USER_HOST=$(printf %s "$1" | sed 's/:$//')
 # tack the hostname onto SSH_OPTS
 SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }'$(quote "$USER_HOST")'"
 # and populate "$@" for later use (only way to get proper quoting of options)
@@ -141,7 +141,7 @@ if [ -z "$(eval $GET_ID)" ] && [ -r "${PUB_ID_FILE:=$DEFAULT_PUB_ID_FILE}" ] ; t
 fi
 
 if [ -z "$(eval $GET_ID)" ] ; then
-  echo "$0: ERROR: No identities found" >&2
+  printf '%s: ERROR: No identities found\n' "$0" >&2
   exit 1
 fi
 
@@ -201,15 +201,15 @@ REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' "$@" 2>&1 |
 case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids 1
-    for KEY in $(echo "$NEW_IDS"| cut -d' ' -f2) ; do
+    for KEY in $(printf %s "$NEW_IDS" | cut -d' ' -f2) ; do
       KEY_NO=$(($KEY_NO + 1))
-      echo "$KEY" | grep -q ssh-dss || {
-         echo "$0: WARNING: Non-dsa key (#$KEY_NO) skipped (NetScreen only supports DSA keys)" >&2
+      printf %s "$KEY" | grep -q ssh-dss || {
+         printf '%s: WARNING: Non-dsa key (#%d) skipped (NetScreen only supports DSA keys)' "$0" "$KEY_NO" >&2
          continue
       }
       [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T "$@" >/dev/null 2>&1
       if [ $? = 255 ] ; then
-        echo "$0: ERROR: installation of key #$KEY_NO failed (please report a bug describing what caused this, so that we can make this message useful)" >&2
+        printf '%s: ERROR: installation of key #%d failed (please report a bug describing what caused this, so that we can make this message useful)' "$0" "$KEY_NO" >&2
       else
         ADDED=$(($ADDED + 1))
       fi
@@ -231,10 +231,13 @@ case "$REMOTE_VERSION" in
 esac
 
 if [ "$DRY_RUN" ] ; then
-  echo =-=-=-=-=-=-=-=
-  echo "Would have added the following key(s):"
-  printf "\n$NEW_IDS\n"
-  echo =-=-=-=-=-=-=-=
+  cat <<-EOF
+	=-=-=-=-=-=-=-=
+	Would have added the following key(s):
+
+	$NEW_IDS
+	=-=-=-=-=-=-=-=
+	EOF
 fi
 
 cat <<-EOF
