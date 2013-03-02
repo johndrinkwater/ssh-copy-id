@@ -36,7 +36,7 @@
 DEFAULT_PUB_ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub | grep -v -- '-cert.pub$' | head -n 1)
 
 usage () {
-  printf 'Usage: %s [-h|-?|-n] [-i [identity_file]] [-p port] [[-o <ssh -o options>] ...] [user@]hostname' "$0" >&2
+  printf 'Usage: %s [-h|-?|-n] [-i [identity_file]] [-p port] [[-o <ssh -o options>] ...] [user@]hostname\n' "$0" >&2
   exit 1
 }
 
@@ -100,7 +100,7 @@ while true ; do
       if 2>/dev/null [ "$2" -gt 0 ] && [ "$2" -lt 65536 ] ; then
         SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }-p '$(quote "$2")'"
       else
-        printf "Bad port '%s'" "$2" >&2
+        printf "Bad port '%s'\n" "$2" >&2
         exit 1
       fi
       shift 2
@@ -204,12 +204,12 @@ case "$REMOTE_VERSION" in
     for KEY in $(printf %s "$NEW_IDS" | cut -d' ' -f2) ; do
       KEY_NO=$(($KEY_NO + 1))
       printf %s "$KEY" | grep -q ssh-dss || {
-         printf '%s: WARNING: Non-dsa key (#%d) skipped (NetScreen only supports DSA keys)' "$0" "$KEY_NO" >&2
+         printf '%s: WARNING: Non-dsa key (#%d) skipped (NetScreen only supports DSA keys)\n' "$0" "$KEY_NO" >&2
          continue
       }
       [ "$DRY_RUN" ] || printf 'set ssh pka-dsa key %s\nsave\nexit\n' "$KEY" | ssh -T "$@" >/dev/null 2>&1
       if [ $? = 255 ] ; then
-        printf '%s: ERROR: installation of key #%d failed (please report a bug describing what caused this, so that we can make this message useful)' "$0" "$KEY_NO" >&2
+        printf '%s: ERROR: installation of key #%d failed (please report a bug describing what caused this, so that we can make this message useful)\n' "$0" "$KEY_NO" >&2
       else
         ADDED=$(($ADDED + 1))
       fi
