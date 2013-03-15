@@ -221,7 +221,7 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
     populate_new_ids 0
-    [ "$DRY_RUN" ] || printf '\n%s\n' "$NEW_IDS" | ssh "$@" "
+    [ "$DRY_RUN" ] || printf '%s\n' "$NEW_IDS" | ssh "$@" "
 		umask 077 ;
 		mkdir -p .ssh && cat >> .ssh/authorized_keys || exit 1 ;
 		if type restorecon >/dev/null 2>&1 ; then restorecon -F .ssh .ssh/authorized_keys ; fi" \
