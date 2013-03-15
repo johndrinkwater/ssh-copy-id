@@ -172,10 +172,10 @@ populate_new_ids() {
         if [ "$?" = "$L_SUCCESS" ] ; then
           : > $L_TMP_ID_FILE
         else
-          if ! grep -q 'Permission denied' $L_TMP_ID_FILE.stderr ; then
+          grep -q 'Permission denied' $L_TMP_ID_FILE.stderr || {
             sed -e 's/^/ERROR: /' <$L_TMP_ID_FILE.stderr >$L_TMP_ID_FILE
             cat >/dev/null #consume the other keys, causing loop to end
-          fi
+          }
         fi
 
         cat $L_TMP_ID_FILE
@@ -224,7 +224,7 @@ case "$REMOTE_VERSION" in
     [ "$DRY_RUN" ] || printf '\n%s\n' "$NEW_IDS" | ssh "$@" "
 		umask 077 ;
 		mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys || exit 1 ;
-		! type restorecon >/dev/null 2>&1 || restorecon -F .ssh .ssh/authorized_keys" \
+		if type restorecon >/dev/null 2>&1 ; then restorecon -F .ssh .ssh/authorized_keys ; fi" \
       || exit 1
     ADDED=$(printf '%s\n' "$NEW_IDS" | wc -l)
     ;;
