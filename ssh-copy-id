@@ -109,8 +109,7 @@ do
       shift
       ;;
     -o|-p)
-      OPT="$(printf -- "$1\n"|cut -c1-2)"
-
+      OPT="$1"
       OPTARG="$2"
       shift 2
       ;;
