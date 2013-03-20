@@ -189,7 +189,7 @@ populate_new_ids() {
         if [ "$?" = "$L_SUCCESS" ] ; then
           : > $L_TMP_ID_FILE
         else
-          grep -q 'Permission denied' $L_TMP_ID_FILE.stderr || {
+          grep 'Permission denied' $L_TMP_ID_FILE.stderr >/dev/null || {
             sed -e 's/^/ERROR: /' <$L_TMP_ID_FILE.stderr >$L_TMP_ID_FILE
             cat >/dev/null #consume the other keys, causing loop to end
           }
@@ -220,7 +220,7 @@ case "$REMOTE_VERSION" in
     populate_new_ids 1
     for KEY in $(printf %s "$NEW_IDS" | cut -d' ' -f2) ; do
       KEY_NO=$(($KEY_NO + 1))
-      printf %s "$KEY" | grep -q ssh-dss || {
+      printf %s "$KEY" | grep ssh-dss >/dev/null || {
          printf '%s: WARNING: Non-dsa key (#%d) skipped (NetScreen only supports DSA keys)\n' "$0" "$KEY_NO" >&2
          continue
       }
