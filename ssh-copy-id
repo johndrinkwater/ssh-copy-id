@@ -115,6 +115,7 @@ do
       shift 2
       ;;
     -i)
+      OPT="$1"
       test "$#" -le 2 || expr "$2" : - >/dev/null || {
         OPTARG="$2"
         shift
