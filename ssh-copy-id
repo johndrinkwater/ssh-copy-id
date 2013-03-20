@@ -42,7 +42,7 @@ usage () {
 
 # escape any single quotes in an argument
 quote() {
-  printf %s "$1" | sed -e "s/'/'\\\\''/g"
+  printf "%s\n" "$1" | sed -e "s/'/'\\\\''/g"
 }
 
 use_id_file() {
@@ -59,7 +59,7 @@ use_id_file() {
   # check that the files are readable
   for f in $PUB_ID_FILE $PRIV_ID_FILE ; do
     ErrMSG=$( { : < $f ; } 2>&1 ) || {
-      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(printf %s "$ErrMSG" | sed -e 's/.*: *//')"
+      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(printf "%s\n" "$ErrMSG" | sed -e 's/.*: *//')"
       exit 1
     }
   done
@@ -81,12 +81,13 @@ do
   # implement something like getopt to avoid Solaris pain
   case "$1" in
     -i?*|-o?*|-p?*)
-      OPT="$(printf -- "$1"|cut -c1-2)"
-      OPTARG="$(printf -- "$1"|cut -c3-)"
+      OPT="$(printf -- "$1\n"|cut -c1-2)"
+      OPTARG="$(printf -- "$1\n"|cut -c3-)"
       shift
       ;;
     -o|-p)
-      OPT="$(printf -- "$1"|cut -c1-2)"
+      OPT="$(printf -- "$1\n"|cut -c1-2)"
+
       OPTARG="$2"
       shift 2
       ;;
@@ -147,7 +148,7 @@ if [ $# != 1 ] ; then
 fi
 
 # drop trailing colon
-USER_HOST=$(printf %s "$1" | sed 's/:$//')
+USER_HOST=$(printf "%s\n" "$1" | sed 's/:$//')
 # tack the hostname onto SSH_OPTS
 SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }'$(quote "$USER_HOST")'"
 # and populate "$@" for later use (only way to get proper quoting of options)
@@ -218,9 +219,9 @@ REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' "$@" 2>&1 |
 case "$REMOTE_VERSION" in
   NetScreen*)
     populate_new_ids 1
-    for KEY in $(printf %s "$NEW_IDS" | cut -d' ' -f2) ; do
+    for KEY in $(printf "%s\n" "$NEW_IDS" | cut -d' ' -f2) ; do
       KEY_NO=$(($KEY_NO + 1))
-      printf %s "$KEY" | grep ssh-dss >/dev/null || {
+      printf "%s\n" "$KEY" | grep ssh-dss >/dev/null || {
          printf '%s: WARNING: Non-dsa key (#%d) skipped (NetScreen only supports DSA keys)\n' "$0" "$KEY_NO" >&2
          continue
       }
