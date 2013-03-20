@@ -279,13 +279,15 @@ if [ "$DRY_RUN" ] ; then
 	$NEW_IDS
 	=-=-=-=-=-=-=-=
 	EOF
-fi
-
-cat <<-EOF
+else
+  cat <<-EOF
 
 	Number of key(s) added: $ADDED
 
-	Now try logging into the machine, with "ssh $SSH_OPTS", and check
-	to make sure we haven't added extra keys that you weren't expecting.
+	Now try logging into the machine, with:   "ssh $SSH_OPTS"
+	and check to make sure that only the key(s) you wanted were added.
 
-EOF
+	EOF
+fi
+
+# =-=-=-=
