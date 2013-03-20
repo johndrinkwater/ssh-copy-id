@@ -70,62 +70,79 @@ if [ -n "$SSH_AUTH_SOCK" ] && ssh-add -L >/dev/null 2>&1 ; then
   GET_ID="ssh-add -L"
 fi
 
-GETOPT_PARSED=$(getopt --options 'i::o:p:nh?' --name "$0" --quiet -- "$@")
-
-eval set -- "$GETOPT_PARSED"
-while true ; do
-  case "$1" in
-    -i)
-      [ "${SEEN_OPT_I}" ] && {
+while test "$#" -gt 0
+do
+  [ "${SEEN_OPT_I}" ] && expr -- "$1" : -i >/dev/null && {
         printf "\n%s: ERROR: -i option must not be specified more than once\n\n" "$0"
         usage
-      }
-      SEEN_OPT_I="yes"
-      case "$2" in
-        '')
-          CHECK_EXTRA_PARAM=1
-          use_id_file "$DEFAULT_PUB_ID_FILE"
-          ;;
-        *)
-          use_id_file "$2"
-          ;;
-      esac
-      shift 2
-      ;;
-    -o)
-      SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }-o '$(quote "$2")'"
-      shift 2
-      ;;
-    -p)
-      if 2>/dev/null [ "$2" -gt 0 ] && [ "$2" -lt 65536 ] ; then
-        SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }-p '$(quote "$2")'"
-      else
-        printf "Bad port '%s'\n" "$2" >&2
-        exit 1
-      fi
-      shift 2
-      ;;
-    -n)
-      DRY_RUN=1
+  }
+
+  OPT= OPTARG=
+  # implement something like getopt to avoid Solaris pain
+  case "$1" in
+    -i?*|-o?*|-p?*)
+      OPT="$(printf -- "$1"|cut -c1-2)"
+      OPTARG="$(printf -- "$1"|cut -c3-)"
       shift
       ;;
-    -h|-\?)
-      usage
+    -o|-p)
+      OPT="$(printf -- "$1"|cut -c1-2)"
+      OPTARG="$2"
+      shift 2
+      ;;
+    -i)
+      test "$#" -le 2 || expr "$2" : - >/dev/null || {
+        OPTARG="$2"
+        shift
+      }
+      shift
+      ;;
+    -n|-h|-\?)
+      OPT="$1"
+      OPTARG=
       shift
       ;;
     --)
       shift
+      while test "$#" -gt 0
+      do
+        SAVEARGS="${SAVEARGS:+$SAVEARGS }'$(quote "$1")'"
+        shift
+      done
       break
       ;;
+    -*)
+      printf "\n%s: ERROR: invalid option (%s)\n\n" "$0" "$1"
+      usage
+      ;;
+    *)
+      SAVEARGS="${SAVEARGS:+$SAVEARGS }'$(quote "$1")'"
+      shift
+      continue
+      ;;
   esac
-done
 
-if [ -n "$CHECK_EXTRA_PARAM" ] && [ $# = 2 ] ; then
-  use_id_file "$1"
-  shift
-fi
+  case "$OPT" in
+    -i)
+      SEEN_OPT_I="yes"
+      use_id_file "${OPTARG:-$DEFAULT_PUB_ID_FILE}"
+      ;;
+    -o|-p)
+      SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }$OPT '$(quote "$OPTARG")'"
+      ;;
+    -n)
+      DRY_RUN=1
+      ;;
+    -h|-\?)
+      usage
+      ;;
+  esac
+done 
+
+eval set -- "$SAVEARGS"
 
 if [ $# != 1 ] ; then
+  printf '%s: ERROR: Too many arguments.  Expecting a target hostname, got: %s\n\n' "$0" "$SAVEARGS" >&2
   usage
 fi
 
