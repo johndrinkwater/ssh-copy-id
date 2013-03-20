@@ -95,7 +95,7 @@ fi
 
 while test "$#" -gt 0
 do
-  [ "${SEEN_OPT_I}" ] && expr -- "$1" : -i >/dev/null && {
+  [ "${SEEN_OPT_I}" ] && expr "$1" : "[-]i" >/dev/null && {
         printf "\n%s: ERROR: -i option must not be specified more than once\n\n" "$0"
         usage
   }
@@ -115,7 +115,7 @@ do
       ;;
     -i)
       OPT="$1"
-      test "$#" -le 2 || expr "$2" : - >/dev/null || {
+      test "$#" -le 2 || expr "$2" : "[-]" >/dev/null || {
         OPTARG="$2"
         shift
       }
