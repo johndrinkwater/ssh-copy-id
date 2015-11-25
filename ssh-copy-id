@@ -59,7 +59,10 @@ fi
 DEFAULT_PUB_ID_FILE=$(ls -t ${HOME}/.ssh/id*.pub 2>/dev/null | grep -v -- '-cert.pub$' | head -n 1)
 
 usage () {
-  printf 'Usage: %s [-h|-?|-n] [-i [identity_file]] [-p port] [[-o <ssh -o options>] ...] [user@]hostname\n' "$0" >&2
+  printf 'Usage: %s [-h|-?|-f|-n] [-i [identity_file]] [-p port] [[-o <ssh -o options>] ...] [user@]hostname\n' "$0" >&2
+  printf '\t-f: force mode -- copy keys without trying to check if they are already installed\n' >&2
+  printf '\t-n: dry run    -- no keys are actually copied\n' >&2
+  printf '\t-h|-?: print this help\n' >&2
   exit 1
 }
 
@@ -121,7 +124,7 @@ do
       }
       shift
       ;;
-    -n|-h|-\?)
+    -f|-n|-h|-\?)
       OPT="$1"
       OPTARG=
       shift
@@ -153,6 +156,9 @@ do
       ;;
     -o|-p)
       SSH_OPTS="${SSH_OPTS:+$SSH_OPTS }$OPT '$(quote "$OPTARG")'"
+      ;;
+    -f)
+      FORCED=1
       ;;
     -n)
       DRY_RUN=1
@@ -193,6 +199,11 @@ fi
 # and has the side effect of setting $NEW_IDS
 populate_new_ids() {
   local L_SUCCESS="$1"
+
+  if [ "$FORCED" ] ; then
+    NEW_IDS=$(eval $GET_ID)
+    return
+  fi
 
   # repopulate "$@" inside this function 
   eval set -- "$SSH_OPTS"
