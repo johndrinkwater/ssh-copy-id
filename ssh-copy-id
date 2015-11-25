@@ -215,6 +215,7 @@ populate_new_ids() {
         # The point being that if file based, ssh needs the private key, which it cannot
         # find if only given the contents of the .pub file in an unrelated tmpfile
         ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
+            -o LogLevel=INFO \
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes "$@" exit 2>$L_TMP_ID_FILE.stderr </dev/null
         if [ "$?" = "$L_SUCCESS" ] ; then
