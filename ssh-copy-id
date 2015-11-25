@@ -215,6 +215,7 @@ populate_new_ids() {
         # The point being that if file based, ssh needs the private key, which it cannot
         # find if only given the contents of the .pub file in an unrelated tmpfile
         ssh -i "${PRIV_ID_FILE:-$L_TMP_ID_FILE}" \
+            -o ControlPath=none \
             -o LogLevel=INFO \
             -o PreferredAuthentications=publickey \
             -o IdentitiesOnly=yes "$@" exit 2>$L_TMP_ID_FILE.stderr </dev/null
@@ -244,7 +245,7 @@ populate_new_ids() {
   printf '%s: INFO: %d key(s) remain to be installed -- if you are prompted now it is to install the new keys\n' "$0" "$(printf '%s\n' "$NEW_IDS" | wc -l)" >&2
 }
 
-REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' "$@" 2>&1 |
+REMOTE_VERSION=$(ssh -v -o PreferredAuthentications=',' -o ControlPath=none "$@" 2>&1 |
                  sed -ne 's/.*remote software version //p')
 
 case "$REMOTE_VERSION" in
