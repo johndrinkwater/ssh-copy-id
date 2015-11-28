@@ -85,7 +85,9 @@ use_id_file() {
   # check that the files are readable
   for f in $PUB_ID_FILE $PRIV_ID_FILE ; do
     ErrMSG=$( { : < $f ; } 2>&1 ) || {
-      printf "\n%s: ERROR: failed to open ID file '%s': %s\n\n" "$0" "$f" "$(printf "%s\n" "$ErrMSG" | sed -e 's/.*: *//')"
+      local L_PRIVMSG=""
+      [ "$f" = "$PRIV_ID_FILE" ] && L_PRIVMSG="	(to install the contents of '$PUB_ID_FILE' anyway, look at the -f option)"
+      printf "\n%s: ERROR: failed to open ID file '%s': %s\n" "$0" "$f" "$(printf "%s\n%s\n" "$ErrMSG" "$L_PRIVMSG" | sed -e 's/.*: *//')"
       exit 1
     }
   done
