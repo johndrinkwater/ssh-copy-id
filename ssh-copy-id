@@ -283,6 +283,7 @@ case "$REMOTE_VERSION" in
   *)
     # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
     populate_new_ids 0
+    # in ssh below - to defend against quirky remote shells: use 'exec sh -c' to get POSIX; 'cd' to be at $HOME; and all on one line, because tcsh.
     [ "$DRY_RUN" ] || printf '%s\n' "$NEW_IDS" | \
       ssh "$@" "exec sh -c 'cd ; umask 077 ; mkdir -p .ssh && cat >> .ssh/authorized_keys || exit 1 ; if type restorecon >/dev/null 2>&1 ; then restorecon -F .ssh .ssh/authorized_keys ; fi'" \
       || exit 1
