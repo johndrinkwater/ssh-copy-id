@@ -80,7 +80,7 @@ use_id_file() {
     PUB_ID_FILE="$L_ID_FILE.pub"
   fi
 
-  PRIV_ID_FILE=$(dirname "$PUB_ID_FILE")/$(basename "$PUB_ID_FILE" .pub)
+  [ "$FORCED" ] || PRIV_ID_FILE=$(dirname "$PUB_ID_FILE")/$(basename "$PUB_ID_FILE" .pub)
 
   # check that the files are readable
   for f in $PUB_ID_FILE $PRIV_ID_FILE ; do
