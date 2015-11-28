@@ -91,6 +91,7 @@ use_id_file() {
       exit 1
     }
   done
+  printf '%s: INFO: Source of key(s) to be installed: "%s"\n' "$0" $PUB_ID_FILE >&2
   GET_ID="cat \"$PUB_ID_FILE\""
 }
 
