@@ -56,7 +56,8 @@ then
   fi
 fi
 
-DEFAULT_PUB_ID_FILE="$HOME/$(cd "$HOME" ; ls -t .ssh/id*.pub 2>/dev/null | grep -v -- '-cert.pub$' | head -n 1)"
+most_recent_id="$(cd "$HOME" ; ls -t .ssh/id*.pub 2>/dev/null | grep -v -- '-cert.pub$' | head -n 1)"
+DEFAULT_PUB_ID_FILE="${most_recent_id:+$HOME/}$most_recent_id"
 
 usage () {
   printf 'Usage: %s [-h|-?|-f|-n] [-i [identity_file]] [-p port] [[-o <ssh -o options>] ...] [user@]hostname\n' "$0" >&2
@@ -73,6 +74,11 @@ quote() {
 
 use_id_file() {
   local L_ID_FILE="$1"
+
+  if [ -z "$L_ID_FILE" ] ; then
+    printf "%s: ERROR: no ID file found\n" "$0"
+    exit 1
+  fi
 
   if expr "$L_ID_FILE" : ".*\.pub$" >/dev/null ; then
     PUB_ID_FILE="$L_ID_FILE"
