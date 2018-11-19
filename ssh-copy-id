@@ -291,12 +291,13 @@ case "$REMOTE_VERSION" in
     fi
     ;;
   *)
-    # Assuming that the remote host treats ~/.ssh/authorized_keys as one might expect
+    # Discovers remote host authorized_keys location via `sshd -T`
+    # default value is: authorizedkeysfile .ssh/authorized_keys .ssh/authorized_keys2
     populate_new_ids 0
     # in ssh below - to defend against quirky remote shells: use 'exec sh -c' to get POSIX;
     #     'cd' to be at $HOME; add a newline if it's missing; and all on one line, because tcsh.
     [ "$DRY_RUN" ] || printf '%s\n' "$NEW_IDS" | \
-      ssh "$@" "exec sh -c 'cd ; umask 077 ; mkdir -p .ssh && { [ -z "'`tail -1c .ssh/authorized_keys 2>/dev/null`'" ] || echo >> .ssh/authorized_keys ; } && cat >> .ssh/authorized_keys || exit 1 ; if type restorecon >/dev/null 2>&1 ; then restorecon -F .ssh .ssh/authorized_keys ; fi'" \
+      ssh "$@" "exec sh -c 'cd ; umask 077 ; authorized_keys=\$( sshd -T 2> /dev/null | grep authorizedkeysfile | cut -d\" \" -f2 | sed -e \"s#%h#\$HOME#g; s#%u#\$USER#g; s#%%#%#g\" ) ; authorized_keys=\${authorized_keys:=.ssh/authorized_keys} ; dotssh=\$( dirname \$authorized_keys ) ; mkdir -p \$dotssh && { [ -z "'`tail -1c \$authorized_keys 2>/dev/null`'" ] || echo >> \$authorized_keys ; } && cat >> \$authorized_keys || exit 1 ; if type restorecon >/dev/null 2>&1 ; then restorecon -F \$dotssh \$authorized_keys ; fi'" \
       || exit 1
     ADDED=$(printf '%s\n' "$NEW_IDS" | wc -l)
     ;;
