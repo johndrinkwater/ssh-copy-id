@@ -218,7 +218,7 @@ populate_new_ids() {
   eval set -- "$SSH_OPTS"
 
   umask 0177
-  local L_TMP_ID_FILE=$(mktemp ~/.ssh/ssh-copy-id_id.XXXXXXXXXX)
+  local L_TMP_ID_FILE=$(mktemp ${XDG_RUNTIME_DIR:=~/.ssh}/ssh-copy-id_id.XXXXXXXXXX)
   if test $? -ne 0 || test "x$L_TMP_ID_FILE" = "x" ; then
     printf '%s: ERROR: mktemp failed\n' "$0" >&2
     exit 1
